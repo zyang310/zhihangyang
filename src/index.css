@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* Custom theme configuration */
+@theme {
+  --color-chinese-red: #C41E3A;
+  --color-chinese-red-dark: #8B0000;
+  --color-gold: #D4AF37;
+  --color-gold-light: #F4D03F;
+  --color-ink-black: #1A1A1A;
+  --color-rice-paper: #F5F5DC;
+  --color-rice-paper-dark: #E8E4C9;
+  --color-element-wood: #228B22;
+  --color-element-wood-light: #90EE90;
+  --color-element-fire: #FF4500;
+  --color-element-fire-light: #FF6B4A;
+  --color-element-earth: #DAA520;
+  --color-element-earth-light: #F0C050;
+  --color-element-metal: #C0C0C0;
+  --color-element-metal-light: #E8E8E8;
+  --color-element-water: #1E90FF;
+  --color-element-water-light: #87CEEB;
+
+  --font-chinese: "Ma Shan Zheng", cursive;
+  --font-body: "Noto Serif SC", Georgia, serif;
+
+  --animate-pulse-slow: pulse 2s ease-in-out infinite;
+  --animate-scroll-hint: scroll-hint 1.5s ease-in-out infinite;
+
+  @keyframes scroll-hint {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(10px); }
+  }
+}
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-rice-paper);
+  color: var(--color-ink-black);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
