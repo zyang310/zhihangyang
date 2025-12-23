@@ -16,7 +16,7 @@ export function YearSection({ year, element, children, isOdd, showDecoration = t
 
   return (
     <section
-      className={`w-screen min-h-screen flex items-center justify-center p-8 relative shrink-0 ${bgClass}`}
+      className={`w-full min-h-screen md:w-screen flex items-center justify-center p-8 relative shrink-0 ${bgClass}`}
       data-year={year}
       data-element={element}
     >

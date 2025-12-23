@@ -6,11 +6,10 @@ gsap.registerPlugin(ScrollTrigger);
 
 interface HorizontalScrollProps {
   children: ReactNode;
-  onProgressUpdate: (progress: number) => void;
   isMobile: boolean;
 }
 
-export function HorizontalScroll({ children, onProgressUpdate, isMobile }: HorizontalScrollProps) {
+export function HorizontalScroll({ children, isMobile }: HorizontalScrollProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -26,14 +25,11 @@ export function HorizontalScroll({ children, onProgressUpdate, isMobile }: Horiz
       scrollTrigger: {
         trigger: wrapperRef.current,
         start: 'top top',
-        end: () => `+=${totalWidth}`,
+        end: () => '+=' + totalWidth,
         pin: true,
         scrub: 1,
         invalidateOnRefresh: true,
         anticipatePin: 1,
-        onUpdate: (self) => {
-          onProgressUpdate(self.progress);
-        },
       },
     });
 
@@ -65,14 +61,13 @@ export function HorizontalScroll({ children, onProgressUpdate, isMobile }: Horiz
     return () => {
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
-  }, [isMobile, onProgressUpdate]);
+  }, [isMobile]);
 
   // Mobile: use vertical scroll with intersection observer
   useEffect(() => {
     if (!isMobile || !containerRef.current) return;
 
     const sections = containerRef.current.querySelectorAll('[data-year]');
-    const totalSections = sections.length;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -83,9 +78,6 @@ export function HorizontalScroll({ children, onProgressUpdate, isMobile }: Horiz
               card.style.opacity = '1';
               card.style.transform = 'translateY(0)';
             }
-            // Calculate progress based on which section is visible
-            const index = Array.from(sections).indexOf(entry.target);
-            onProgressUpdate(index / (totalSections - 1));
           }
         });
       },
@@ -103,13 +95,15 @@ export function HorizontalScroll({ children, onProgressUpdate, isMobile }: Horiz
     });
 
     return () => observer.disconnect();
-  }, [isMobile, onProgressUpdate]);
+  }, [isMobile]);
+
+  const mobileClasses = isMobile ? 'flex-col w-full' : 'w-fit';
 
   return (
     <div ref={wrapperRef} className={isMobile ? 'overflow-y-auto overflow-x-hidden' : 'overflow-hidden'}>
       <div
         ref={containerRef}
-        className={`flex will-change-transform ${isMobile ? 'flex-col w-full' : 'w-fit'}`}
+        className={'flex will-change-transform ' + mobileClasses}
       >
         {children}
       </div>

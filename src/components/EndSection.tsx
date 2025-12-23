@@ -12,7 +12,7 @@ export function EndSection() {
 
           <div className="flex gap-6 justify-center flex-wrap">
             <a
-              href="mailto:your.email@example.com"
+              href="mailto:zhihangyang.zhy@gmail.com"
               className="text-gold no-underline px-6 py-3 border border-gold transition-all hover:bg-gold hover:text-chinese-red-dark"
             >
               Email
@@ -24,7 +24,7 @@ export function EndSection() {
               GitHub
             </a>
             <a
-              href="https://linkedin.com/in/yourprofile"
+              href="https://www.linkedin.com/in/zhi-hang-yang/"
               className="text-gold no-underline px-6 py-3 border border-gold transition-all hover:bg-gold hover:text-chinese-red-dark"
             >
               LinkedIn
