@@ -1,46 +1,39 @@
 @import "tailwindcss";
 
-/* Custom theme configuration */
-@theme {
-  --color-chinese-red: #C41E3A;
-  --color-chinese-red-dark: #8B0000;
-  --color-gold: #D4AF37;
-  --color-gold-light: #F4D03F;
-  --color-ink-black: #1A1A1A;
-  --color-rice-paper: #F5F5DC;
-  --color-rice-paper-dark: #E8E4C9;
-  --color-element-wood: #228B22;
-  --color-element-wood-light: #90EE90;
-  --color-element-fire: #FF4500;
-  --color-element-fire-light: #FF6B4A;
-  --color-element-earth: #DAA520;
-  --color-element-earth-light: #F0C050;
-  --color-element-metal: #C0C0C0;
-  --color-element-metal-light: #E8E8E8;
-  --color-element-water: #1E90FF;
-  --color-element-water-light: #87CEEB;
-
-  --font-chinese: "Ma Shan Zheng", cursive;
-  --font-body: "Noto Serif SC", Georgia, serif;
-
-  --animate-pulse-slow: pulse 2s ease-in-out infinite;
-  --animate-scroll-hint: scroll-hint 1.5s ease-in-out infinite;
-
-  @keyframes scroll-hint {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(10px); }
-  }
+:root {
+  --font-serif: "EB Garamond", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* Base styles */
-html {
-  scroll-behavior: smooth;
+@theme {
+  --color-walnut-950: #0b0705;
+  --color-walnut-900: #150e09;
+  --color-walnut-800: #21150d;
+  --color-brass-200: #f1dfae;
+  --color-brass-300: #e3c582;
+  --color-brass-400: #cfa95e;
+  --color-paper-50: #fbf6ea;
+  --color-paper-100: #f3ead6;
+  --color-paper-300: #dccdb0;
+  --color-ink-900: #231b13;
+  --color-ink-700: #4b3e30;
+  --color-ink-500: #7a6a58;
+
+  --font-book: var(--font-serif);
+  --font-catalog: var(--font-mono);
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  font-family: var(--font-body);
-  background-color: var(--color-rice-paper);
-  color: var(--color-ink-black);
-  overflow-x: hidden;
-  line-height: 1.6;
+  margin: 0;
+  overflow: hidden;
+  background-color: #0b0705;
+  color: #f3ead6;
+  font-family: var(--font-serif);
+  -webkit-font-smoothing: antialiased;
 }

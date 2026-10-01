@@ -21,3 +21,6 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Raw Higgsfield exports (processed copies go to src/assets/media)
+media-raw/

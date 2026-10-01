@@ -1,108 +1,76 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { gsap } from 'gsap';
-import { Landing } from './components/Landing';
-import { HorizontalScroll } from './components/HorizontalScroll';
-import { YearSection } from './components/YearSection';
-import { YearCard } from './components/YearCard';
-import { EndSection } from './components/EndSection';
-import { ENRICHED_TIMELINE } from './data/zodiacData';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BOOKS } from './data/books';
+import { hasQueryFlag, isReady, lifeVolumes, type Book } from './data/library';
+import { useLibraryState } from './hooks/useLibraryState';
+import { useMediaQuery } from './hooks/useMediaQuery';
+import { Stage } from './components/library/Stage';
+import { BookSpread } from './components/library/BookSpread';
+import { Nameplate } from './components/library/Nameplate';
+import { CardCatalog } from './components/library/CardCatalog';
+
+// Unfinished books show in development, or anywhere with ?drafts.
+const showDrafts = import.meta.env.DEV || hasQueryFlag('drafts');
+const debug = hasQueryFlag('debug');
+const books = showDrafts ? BOOKS : BOOKS.filter(isReady);
+const volumes = lifeVolumes(books);
+const isDraft = (book: Book) => !isReady(book);
 
 function App() {
-  const [isMobile, setIsMobile] = useState(false);
-  const landingRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const library = useLibraryState(books, reducedMotion);
+  const [displayedId, setDisplayedId] = useState<string | null>(null);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const chromeRef = useRef<HTMLDivElement>(null);
+  const catalogButtonRef = useRef<HTMLButtonElement>(null);
+  const previousDisplayed = useRef<string | null>(null);
 
-  // Check for mobile on mount and resize
+  // While a book or the catalog is open, the shelf behind it is inert. When a book
+  // goes back on the shelf, focus returns to it.
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Handle landing scroll click
-  const handleScrollClick = useCallback(() => {
-    if (isMobile) {
-      document.querySelector('.horizontal-scroll-wrapper')?.scrollIntoView({
-        behavior: 'smooth',
-      });
-    } else {
-      const landingHeight = landingRef.current?.offsetHeight || window.innerHeight;
-      window.scrollTo({
-        top: landingHeight,
-        behavior: 'smooth',
-      });
+    const chrome = chromeRef.current;
+    chrome?.toggleAttribute('inert', displayedId !== null || catalogOpen);
+    const previous = previousDisplayed.current;
+    previousDisplayed.current = displayedId;
+    if (previous && !displayedId && !catalogOpen) {
+      chrome?.querySelector<HTMLElement>(`[data-book-id="${previous}"]`)?.focus({ preventScroll: true });
     }
-  }, [isMobile]);
+  }, [displayedId, catalogOpen]);
 
-  // Keyboard navigation
-  useEffect(() => {
-    if (isMobile) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const scrollAmount = window.innerHeight * 0.3;
-
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        window.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isMobile]);
-
-  // Animate landing content on load
-  useEffect(() => {
-    gsap.from('.landing-content', {
-      opacity: 0,
-      y: 30,
-      duration: 1,
-      ease: 'power3.out',
-    });
-
-    gsap.from('.zodiac-symbol-anim', {
-      scale: 0.5,
-      opacity: 0,
-      duration: 1.2,
-      delay: 0.3,
-      ease: 'elastic.out(1, 0.5)',
-    });
+  const closeCatalog = useCallback(() => {
+    setCatalogOpen(false);
+    requestAnimationFrame(() => catalogButtonRef.current?.focus({ preventScroll: true }));
   }, []);
 
   return (
-    <div className="font-body bg-rice-paper text-ink-black overflow-x-hidden leading-relaxed">
-      <div ref={landingRef}>
-        <Landing onScrollClick={handleScrollClick} />
+    <>
+      <div ref={chromeRef}>
+        <Stage
+          books={books}
+          volumes={volumes}
+          isDraft={isDraft}
+          hiddenId={displayedId}
+          introDone={library.introDone}
+          onIntroDone={library.finishIntro}
+          onOpen={library.open}
+          zoomShelf={library.zoomShelf}
+          onZoomShelf={library.setZoomShelf}
+          reducedMotion={reducedMotion}
+          debug={debug}
+        />
+        <Nameplate ref={catalogButtonRef} onOpenCatalog={() => setCatalogOpen(true)} />
       </div>
-
-      <div className="horizontal-scroll-wrapper">
-        <HorizontalScroll isMobile={isMobile}>
-          <div className="horizontal-scroll-container">
-            {ENRICHED_TIMELINE.map((entry, index) => (
-              <YearSection
-                key={entry.year}
-                year={entry.year}
-                element={entry.zodiac.element}
-                isOdd={index % 2 === 0}
-                showDecoration={index < ENRICHED_TIMELINE.length - 1}
-              >
-                <div className="year-card-wrapper">
-                  <YearCard entry={entry} />
-                </div>
-              </YearSection>
-            ))}
-
-            <EndSection />
-          </div>
-        </HorizontalScroll>
-      </div>
-    </div>
+      <BookSpread
+        book={library.openBook}
+        byId={library.byId}
+        volumes={volumes}
+        isDraft={isDraft}
+        showNotes={showDrafts}
+        reducedMotion={reducedMotion}
+        onClose={library.close}
+        onDisplayedChange={setDisplayedId}
+      />
+      <CardCatalog open={catalogOpen} books={books} volumes={volumes} isDraft={isDraft} onClose={closeCatalog} />
+    </>
   );
 }
 

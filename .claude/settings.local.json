@@ -4,7 +4,13 @@
       "Bash(git check-ignore:*)",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(sed -i '' 's/className=\"lib-unzoom\" ref={skipRef}/className=\"lib-skip\" ref={skipRef}/' src/components/library/Stage.tsx)",
+      "Bash(sed -i '' 's/^\\\\.lib-unzoom {$/.lib-unzoom,\\\\n.lib-skip {/' src/components/library/library.css)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(perl -0pi -e 's/\\(      scene\\\\.inert = true;\\\\n\\)/$1      console.debug\\(\"[intro] run\", scene.inert, performance.now\\(\\)\\);\\\\n/; s/\\(      return \\\\\\(\\\\\\) => \\\\{\\\\n        phase = .done.;\\\\n\\)/$1        console.debug\\(\"[intro] cleanup\", performance.now\\(\\)\\);\\\\n/; s/\\(        phase = .playing.;\\\\n\\)/$1        console.debug\\(\"[intro] start\"\\);\\\\n/' src/components/library/Stage.tsx)",
+      "Bash(perl -0pi -e 's/video\\\\.play\\\\\\(\\\\\\)\\\\.catch\\\\\\(fallBack\\\\\\);/video.play\\(\\).catch\\(\\(e\\) => { console.debug\\(\"[intro] play rejected\", e.name, e.message, document.visibilityState\\); fallBack\\(\\); }\\);/' src/components/library/Stage.tsx)"
     ]
   }
 }
