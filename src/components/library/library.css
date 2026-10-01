@@ -604,6 +604,7 @@
 }
 
 .obook {
+  --zoom: 1;
   position: absolute;
   left: 0;
   top: 0;
@@ -612,6 +613,17 @@
   visibility: hidden;
   pointer-events: auto;
   transform-style: preserve-3d;
+}
+
+/* The book's size, scaled evenly in all three dimensions. GSAP's scale is 2D: it would shrink
+   the book's height to the shelf spine but leave it full thickness, so the spine (which faces
+   us at the start) would come out several times too wide. */
+.obook__body {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform-origin: 0 50%;
+  transform: scale3d(var(--zoom), var(--zoom), var(--zoom));
 }
 
 .obook__face {

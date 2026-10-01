@@ -55,7 +55,7 @@ function buildTimeline({ root, cover, backdrop }: Elements, book: Book, d: Dims,
   gsap.set(cover, { z: d.T / 2, rotationY: 0, autoAlpha: 1, transformOrigin: '0% 50%' });
 
   if (!rect) {
-    gsap.set(root, { x: pose.openX, y: pose.y, z: -d.T / 2, scale: 1, rotation: 0, rotationY: 0, transformOrigin: '0% 50%' });
+    gsap.set(root, { x: pose.openX, y: pose.y, z: -d.T / 2, '--zoom': 1, rotation: 0, rotationY: 0, transformOrigin: '0% 50%' });
     gsap.set(cover, { rotationY: -180, autoAlpha: d.mode === 'single' ? 0 : 1 });
     return tl.fromTo([backdrop, root], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, ease: 'power1.out' });
   }
@@ -66,14 +66,14 @@ function buildTimeline({ root, cover, backdrop }: Elements, book: Book, d: Dims,
     x: rect.left + rect.width / 2,
     y: rect.top + rect.height / 2 - d.H / 2,
     z: 0,
-    scale: (stacked ? rect.width : rect.height) / d.H,
+    '--zoom': (stacked ? rect.width : rect.height) / d.H,
     rotation: stacked ? -90 : 0,
     rotationY: 90,
     autoAlpha: 1,
     transformOrigin: '0% 50%',
   });
   tl.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, ease: 'power1.out' }, 0)
-    .to(root, { x: pose.closedX, y: pose.y, scale: 1, rotation: 0, rotationY: 0, duration: 0.85, ease: 'power3.inOut' }, 0)
+    .to(root, { x: pose.closedX, y: pose.y, '--zoom': 1, rotation: 0, rotationY: 0, duration: 0.85, ease: 'power3.inOut' }, 0)
     .to(cover, { rotationY: -180, duration: 0.95, ease: 'power2.inOut' }, 0.72)
     // Settle the open pages at z = 0 so the text renders crisply.
     .to(root, { x: pose.openX, z: -d.T / 2, duration: 0.8, ease: 'power2.inOut' }, 0.85);
@@ -228,46 +228,48 @@ export function BookSpread(props: BookSpreadProps) {
       <div className="spread__backdrop" ref={backdropRef} onClick={() => latest.current.onClose()} />
       <div className="spread__stage">
         <div className="obook" ref={rootRef} style={style} data-texture={shown.binding.texture}>
-          <div className="obook__face obook__back" />
-          <div className="obook__face obook__spine spine" aria-hidden="true">
-            <SpineContent book={shown} volume={volume} />
-          </div>
-          <div className="obook__face obook__fore" />
-          <div className="obook__face obook__top" />
-
-          <div className="obook__face obook__page page page--right">
-            <div className="page__scroll">
-              <header className="page__header">
-                <p className="page__kicker">
-                  {shelfLabel(shown.shelf)}
-                  {volume && ` · Volume ${volume}`}
-                </p>
-                <h2 id={titleId} ref={titleRef} tabIndex={-1} className="page__title">
-                  {shown.title}
-                </h2>
-                {shown.dates && <p className="page__dates">{shown.dates}</p>}
-              </header>
-              {dims.mode === 'single' && <BookFacts book={shown} volume={volume} compact />}
-              <BookStory book={shown} byId={byId} />
-              {showNotes && <WritingNotes book={shown} draft={draft} />}
+          <div className="obook__body">
+            <div className="obook__face obook__back" />
+            <div className="obook__face obook__spine spine" aria-hidden="true">
+              <SpineContent book={shown} volume={volume} />
             </div>
-          </div>
+            <div className="obook__face obook__fore" />
+            <div className="obook__face obook__top" />
 
-          <div className="obook__cover" ref={coverRef}>
-            <div className="obook__face obook__cover-front cover" aria-hidden="true">
-              <div className="cover__frame">
-                <p className="cover__kicker">{shelfLabel(shown.shelf)}</p>
-                {volume && <p className="cover__vol">Volume {volume}</p>}
-                <p className="cover__title">{shown.title}</p>
-                <p className="cover__dates">{shown.dates}</p>
+            <div className="obook__face obook__page page page--right">
+              <div className="page__scroll">
+                <header className="page__header">
+                  <p className="page__kicker">
+                    {shelfLabel(shown.shelf)}
+                    {volume && ` · Volume ${volume}`}
+                  </p>
+                  <h2 id={titleId} ref={titleRef} tabIndex={-1} className="page__title">
+                    {shown.title}
+                  </h2>
+                  {shown.dates && <p className="page__dates">{shown.dates}</p>}
+                </header>
+                {dims.mode === 'single' && <BookFacts book={shown} volume={volume} compact />}
+                <BookStory book={shown} byId={byId} />
+                {showNotes && <WritingNotes book={shown} draft={draft} />}
               </div>
             </div>
-            <div className="obook__face obook__cover-inside page page--left">
-              {dims.mode === 'spread' && (
-                <div className="page__scroll">
-                  <BookFacts book={shown} volume={volume} />
+
+            <div className="obook__cover" ref={coverRef}>
+              <div className="obook__face obook__cover-front cover" aria-hidden="true">
+                <div className="cover__frame">
+                  <p className="cover__kicker">{shelfLabel(shown.shelf)}</p>
+                  {volume && <p className="cover__vol">Volume {volume}</p>}
+                  <p className="cover__title">{shown.title}</p>
+                  <p className="cover__dates">{shown.dates}</p>
                 </div>
-              )}
+              </div>
+              <div className="obook__face obook__cover-inside page page--left">
+                {dims.mode === 'spread' && (
+                  <div className="page__scroll">
+                    <BookFacts book={shown} volume={volume} />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
