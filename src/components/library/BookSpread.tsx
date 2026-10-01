@@ -43,55 +43,36 @@ function openPose(d: Dims) {
   };
 }
 
-/** Where the book starts its flight: its spine on the shelf, or its cover in Zhi's hands in the armchair. */
-function origin(id: string): { rect: DOMRect; facing: 'spine' | 'cover' } | null {
-  const spine = document.querySelector(`[data-book-id="${id}"] .lib-spine`)?.getBoundingClientRect();
-  if (spine && spine.width > 0) return { rect: spine, facing: 'spine' };
-  const cover = document.querySelector(`[data-book-origin="${id}"]`)?.getBoundingClientRect();
-  if (cover && cover.width > 0) return { rect: cover, facing: 'cover' };
-  return null;
+function spineRect(id: string): DOMRect | null {
+  const spine = document.querySelector(`[data-book-id="${id}"] .lib-spine`);
+  const rect = spine?.getBoundingClientRect();
+  return rect && rect.width > 0 ? rect : null;
 }
 
 function buildTimeline({ root, cover, backdrop }: Elements, book: Book, d: Dims, reducedMotion: boolean) {
   const pose = openPose(d);
-  const start = reducedMotion ? null : origin(book.id);
+  const rect = reducedMotion ? null : spineRect(book.id);
   const tl = gsap.timeline({ paused: true });
   gsap.set(cover, { z: d.T / 2, rotationY: 0, autoAlpha: 1, transformOrigin: '0% 50%' });
 
-  if (!start) {
+  if (!rect) {
     gsap.set(root, { x: pose.openX, y: pose.y, z: -d.T / 2, '--zoom': 1, rotation: 0, rotationY: 0, transformOrigin: '0% 50%' });
     gsap.set(cover, { rotationY: -180, autoAlpha: d.mode === 'single' ? 0 : 1 });
     return tl.fromTo([backdrop, root], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, ease: 'power1.out' });
   }
 
-  const { rect } = start;
-  if (start.facing === 'spine') {
-    // Pivot on the spine: with the origin at the left edge, rotateY(90°) leaves the spine facing us.
-    const stacked = Boolean(book.binding.stacked);
-    gsap.set(root, {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2 - d.H / 2,
-      z: 0,
-      '--zoom': (stacked ? rect.width : rect.height) / d.H,
-      rotation: stacked ? -90 : 0,
-      rotationY: 90,
-      autoAlpha: 1,
-      transformOrigin: '0% 50%',
-    });
-  } else {
-    // The photo's book can't leave Zhi's hands, so this one fades in over it, cover first.
-    gsap.set(root, {
-      x: rect.left,
-      y: rect.top + rect.height / 2 - d.H / 2,
-      z: 0,
-      '--zoom': rect.height / d.H,
-      rotation: 0,
-      rotationY: 0,
-      autoAlpha: 0,
-      transformOrigin: '0% 50%',
-    });
-    tl.to(root, { autoAlpha: 1, duration: 0.25, ease: 'power1.out' }, 0);
-  }
+  // Pivot on the spine: with the origin at the left edge, rotateY(90°) leaves the spine facing us.
+  const stacked = Boolean(book.binding.stacked);
+  gsap.set(root, {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2 - d.H / 2,
+    z: 0,
+    '--zoom': (stacked ? rect.width : rect.height) / d.H,
+    rotation: stacked ? -90 : 0,
+    rotationY: 90,
+    autoAlpha: 1,
+    transformOrigin: '0% 50%',
+  });
   tl.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, ease: 'power1.out' }, 0)
     .to(root, { x: pose.closedX, y: pose.y, '--zoom': 1, rotation: 0, rotationY: 0, duration: 0.85, ease: 'power3.inOut' }, 0)
     .to(cover, { rotationY: -180, duration: 0.95, ease: 'power2.inOut' }, 0.72)

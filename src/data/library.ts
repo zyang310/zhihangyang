@@ -36,6 +36,7 @@ export interface Book {
   body: string;
   facts?: { label: string; value: string }[];
   links?: { label: string; href: string }[];
+  /** A picture for the left page; for the book Zhi is reading, its cover. */
   image?: { src: string; alt: string };
   /** Writing prompts shown on unfinished books in development. */
   prompts?: string[];
@@ -62,7 +63,7 @@ export const PROMPTS = {
     'What was the result? Add a link and a screenshot.',
   ],
   reading: [
-    'Title and author (put the author in facts).',
+    'When did you start it? (dates, e.g. "Since September 2026")',
     'Why did you pick it up?',
     'One idea that has stuck with you so far.',
   ],
@@ -102,8 +103,21 @@ export function wordCount(body: string): number {
   return text ? text.split(' ').length : 0;
 }
 
+/** What a book still needs before it shows on the live site; empty when it's ready. */
+export function missingForLive(book: Book): string[] {
+  const needs: (string | false)[] = [!book.title.trim() && 'a title'];
+  if (book.shelf === 'reading') {
+    // It's shown by its cover; notes about it are optional.
+    needs.push(!book.image && 'a cover');
+  } else {
+    const words = wordCount(book.body);
+    needs.push(!book.dates.trim() && 'dates', words < MIN_WORDS && `${MIN_WORDS - words} more words`);
+  }
+  return needs.filter((need): need is string => Boolean(need));
+}
+
 export function isReady(book: Book): boolean {
-  return Boolean(book.title.trim() && book.dates.trim()) && wordCount(book.body) >= MIN_WORDS;
+  return missingForLive(book).length === 0;
 }
 
 /** Book size in % of the frame height: h = height, t = spine thickness, d = depth (cover width). */

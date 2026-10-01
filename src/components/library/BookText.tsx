@@ -1,4 +1,4 @@
-import { MIN_WORDS, parseBody, shelfLabel, wordCount, type Book } from '../../data/library';
+import { missingForLive, parseBody, shelfLabel, type Book } from '../../data/library';
 
 /** The story paragraphs; [[id|text]] references become links that pull the other book. */
 export function BookStory({ book, byId }: { book: Book; byId: Map<string, Book> }) {
@@ -84,8 +84,7 @@ export function BookFacts({ book, volume, compact = false }: { book: Book; volum
 
 /** Development only: what's missing before the book goes live, plus the writing prompts. */
 export function WritingNotes({ book, draft }: { book: Book; draft: boolean }) {
-  const words = wordCount(book.body);
-  const missing = [!book.dates.trim() && 'dates', words < MIN_WORDS && `${MIN_WORDS - words} more words`].filter(Boolean);
+  const missing = missingForLive(book);
   if (!draft && !book.prompts?.length) return null;
   return (
     <aside className="page__notes">

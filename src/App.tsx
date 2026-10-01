@@ -5,6 +5,7 @@ import { useLibraryState } from './hooks/useLibraryState';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { Stage } from './components/library/Stage';
 import { BookSpread } from './components/library/BookSpread';
+import { ReadingView } from './components/library/ReadingView';
 import { Nameplate } from './components/library/Nameplate';
 import { CardCatalog } from './components/library/CardCatalog';
 import { HostDialogue } from './components/library/HostDialogue';
@@ -20,7 +21,11 @@ const isDraft = (book: Book) => !isReady(book);
 function App() {
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const library = useLibraryState(books, reducedMotion);
-  const [displayedId, setDisplayedId] = useState<string | null>(null);
+  // The book Zhi is reading has its own view; every other book opens in the 3D spread.
+  const [spreadId, setSpreadId] = useState<string | null>(null);
+  const [readingId, setReadingId] = useState<string | null>(null);
+  const displayedId = spreadId ?? readingId;
+  const reading = library.openBook?.shelf === 'reading';
   const [catalogOpen, setCatalogOpen] = useState(false);
   const chromeRef = useRef<HTMLDivElement>(null);
   const catalogButtonRef = useRef<HTMLButtonElement>(null);
@@ -111,14 +116,23 @@ function App() {
         )}
       </div>
       <BookSpread
-        book={library.openBook}
+        book={reading ? null : library.openBook}
         byId={library.byId}
         volumes={volumes}
         isDraft={isDraft}
         showNotes={showDrafts}
         reducedMotion={reducedMotion}
         onClose={library.close}
-        onDisplayedChange={setDisplayedId}
+        onDisplayedChange={setSpreadId}
+      />
+      <ReadingView
+        book={reading ? library.openBook : null}
+        byId={library.byId}
+        isDraft={isDraft}
+        showNotes={showDrafts}
+        reducedMotion={reducedMotion}
+        onClose={library.close}
+        onDisplayedChange={setReadingId}
       />
       <CardCatalog open={catalogOpen} books={books} volumes={volumes} isDraft={isDraft} onClose={closeCatalog} />
     </>

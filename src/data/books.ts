@@ -1,8 +1,10 @@
 import { PROMPTS, type Book } from './library';
+import threeBodyCover from '../assets/media/cover-three-body.webp';
 
 // Every item on the site is a book. Order here is order on the shelf.
 //
-// A book shows on the live site once it has a title, dates, and at least MIN_WORDS (40) words.
+// A book shows on the live site once it has a title, dates, and at least MIN_WORDS (40) words
+// (the book Zhi is reading needs only a title and a cover image).
 // Unfinished books still appear in development (and with ?drafts) with a "draft" slip,
 // and opening one shows its writing prompts.
 //
@@ -211,11 +213,16 @@ This was a significant milestone for me as it allowed me to apply my knowledge i
   {
     id: 'reading-now',
     shelf: 'reading',
-    title: 'Untitled', // TODO(zhi): the book you're reading now
-    dates: '', // TODO(zhi): e.g. "Since September 2026"
-    // Matches the plain oxblood cover in the photo, so any title fits.
+    title: 'The Three-Body Problem',
+    dates: '', // Optional, e.g. "Since September 2026"
+    // Only used if there's no cover image.
     binding: { texture: 'cloth', color: '#5b1a1c', height: 0.9 },
     body: ``,
+    image: { src: threeBodyCover, alt: 'Cover of The Three-Body Problem by Cixin Liu, translated by Ken Liu' },
+    facts: [
+      { label: 'Author', value: 'Liu Cixin' },
+      { label: 'Translated by', value: 'Ken Liu' },
+    ],
     prompts: PROMPTS.reading,
   },
 ];
