@@ -9,21 +9,26 @@ interface HistoryState {
   libraryDepth?: number;
 }
 
-const INTRO_KEY = 'library:intro-seen';
+/** Where the camera is zoomed: one shelf (phones), the whole bookcase, or nowhere (the room). */
+export type ZoomTarget = ShelfId | 'bookcase';
 
-function introSeen(): boolean {
+// Once per browser session: the intro, and Zhi's greeting after it.
+const INTRO_KEY = 'library:intro-seen';
+const GREETED_KEY = 'library:greeted';
+
+function sessionFlag(key: string): boolean {
   try {
-    return sessionStorage.getItem(INTRO_KEY) === '1';
+    return sessionStorage.getItem(key) === '1';
   } catch {
     return false;
   }
 }
 
-function rememberIntro() {
+function setSessionFlag(key: string) {
   try {
-    sessionStorage.setItem(INTRO_KEY, '1');
+    sessionStorage.setItem(key, '1');
   } catch {
-    // Storage unavailable (private mode); the intro just plays again next time.
+    // Storage unavailable (private mode); it just happens again next time.
   }
 }
 
@@ -43,8 +48,10 @@ export function useLibraryState(books: Book[], reducedMotion: boolean) {
   );
 
   const [openId, setOpenId] = useState(() => parseHash(window.location.hash));
-  const [introDone, setIntroDone] = useState(() => reducedMotion || openId !== null || introSeen());
-  const [zoomShelf, setZoomShelf] = useState<ShelfId | null>(null);
+  const [introDone, setIntroDone] = useState(() => reducedMotion || openId !== null || sessionFlag(INTRO_KEY));
+  // Someone following a link to a specific book came for that book, not a greeting.
+  const [greetOnArrival] = useState(() => openId === null && !sessionFlag(GREETED_KEY));
+  const [zoom, setZoom] = useState<ZoomTarget | null>(null);
   const closingRef = useRef(false);
 
   const open = useCallback(
@@ -103,9 +110,11 @@ export function useLibraryState(books: Book[], reducedMotion: boolean) {
   }, [parseHash, open]);
 
   const finishIntro = useCallback(() => {
-    rememberIntro();
+    setSessionFlag(INTRO_KEY);
     setIntroDone(true);
   }, []);
+
+  const markGreeted = useCallback(() => setSessionFlag(GREETED_KEY), []);
 
   return {
     byId,
@@ -114,7 +123,9 @@ export function useLibraryState(books: Book[], reducedMotion: boolean) {
     close,
     introDone,
     finishIntro,
-    zoomShelf,
-    setZoomShelf,
+    greetOnArrival,
+    markGreeted,
+    zoom,
+    setZoom,
   };
 }

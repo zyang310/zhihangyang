@@ -2,19 +2,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { shelfLabel, type Book, type ShelfId } from '../../data/library';
-import { PLATES, type Plate } from '../../data/scene';
+import { PLATES, type Plate, type Polygon, type Rect } from '../../data/scene';
+import { PROFILE } from '../../data/profile';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import type { ZoomTarget } from '../../hooks/useLibraryState';
+import { HelloButton } from './HostDialogue';
 import { Shelf } from './Shelf';
 import './library.css';
 
 gsap.registerPlugin(useGSAP);
 
-/** The clip is a slow 10 s camera move; this plays it in under 7. */
-const CLIP_RATE = 1.5;
+/** The clip is a 7 s camera move; this plays it in under 6. */
+const CLIP_RATE = 1.25;
 /** How long the clip gets to start playing before the push-in takes over. */
 const CLIP_TIMEOUT_MS = 4000;
-/** Everything on the shelves: hidden while the clip plays over them. */
-const SHELVES = '.lib-shelf, .lib-label';
+/** Everything drawn over the photo: hidden while the clip plays over it. */
+const OVER_PLATE = '.lib-shelf, .lib-label, .lib-hotspot';
+const FIRST_NAME = PROFILE.name.split(' ')[0];
 
 interface StageProps {
   books: Book[];
@@ -25,10 +29,28 @@ interface StageProps {
   introDone: boolean;
   onIntroDone: () => void;
   onOpen: (id: string) => void;
-  zoomShelf: ShelfId | null;
-  onZoomShelf: (shelf: ShelfId | null) => void;
+  zoom: ZoomTarget | null;
+  onZoom: (target: ZoomTarget | null) => void;
+  /** Clicking Zhi in the armchair (or the hello button on phones). */
+  onGreet: () => void;
+  dialogueOpen: boolean;
   reducedMotion: boolean;
   debug: boolean;
+}
+
+interface Box {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+  /** Share of the viewport height the box may fill. */
+  fill: number;
+}
+
+/** How far to zoom so the box fills the viewport: never out, never past 2.6×. */
+function zoomScale(box: Box) {
+  const fit = Math.min((window.innerWidth * 0.92) / (box.x1 - box.x0), (window.innerHeight * box.fill) / (box.y1 - box.y0));
+  return Math.min(Math.max(fit, 1), 2.6);
 }
 
 export function Stage({
@@ -39,8 +61,10 @@ export function Stage({
   introDone,
   onIntroDone,
   onOpen,
-  zoomShelf,
-  onZoomShelf,
+  zoom,
+  onZoom,
+  onGreet,
+  dialogueOpen,
   reducedMotion,
   debug,
 }: StageProps) {
@@ -55,13 +79,19 @@ export function Stage({
   const vignetteRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const skipRef = useRef<HTMLButtonElement>(null);
-  const [tip, setTip] = useState<{ book: Book; x: number; y: number } | null>(null);
+  const [tip, setTipState] = useState<{ title: string; meta: string; x: number; y: number } | null>(null);
+  // Tooltips are centered on their target; keep ones near the screen's edge fully on screen.
+  const setTip = useCallback((next: { title: string; meta: string; x: number; y: number } | null) => {
+    const margin = Math.min(150, window.innerWidth / 2);
+    setTipState(next && { ...next, x: Math.min(Math.max(next.x, margin), window.innerWidth - margin) });
+  }, []);
 
   const booksByShelf = useMemo(() => {
-    const groups: Record<ShelfId, Book[]> = { life: [], experience: [], projects: [] };
+    const groups: Record<ShelfId, Book[]> = { life: [], experience: [], projects: [], reading: [] };
     for (const book of books) groups[book.shelf].push(book);
     return groups;
   }, [books]);
+  const reading = booksByShelf.reading[0];
 
   // Intro: the clip (a camera move across the room that ends exactly on the plate) fades up
   // out of the dark and crossfades into the plate, then the books slide onto their shelves and
@@ -76,7 +106,7 @@ export function Stage({
       const unit = (frameRef.current?.offsetHeight ?? window.innerHeight) / 100;
 
       const shelveBooks = (timeline: gsap.core.Timeline, at: gsap.Position) => {
-        gsap.set(SHELVES, { clearProps: 'opacity,visibility' }); // hidden while the clip plays
+        gsap.set(OVER_PLATE, { clearProps: 'opacity,visibility' }); // hidden while the clip plays
         return timeline
           .from(
             '.lib-slot',
@@ -115,8 +145,8 @@ export function Stage({
       }
 
       let phase: 'waiting' | 'playing' | 'done' = 'waiting';
-      // The shelves wait out of sight, and out of reach of clicks and Tab, until the clip is over.
-      gsap.set(SHELVES, { autoAlpha: 0 });
+      // The shelves and click targets wait out of sight, and out of reach of clicks and Tab, until the clip is over.
+      gsap.set(OVER_PLATE, { autoAlpha: 0 });
       gsap.set(scene, { autoAlpha: 0 });
       gsap.set(vignette, { autoAlpha: 1 });
 
@@ -187,70 +217,110 @@ export function Stage({
     { scope: sceneRef },
   );
 
+  // Per-shelf zoom is for phones; the bookcase zoom works everywhere.
   useEffect(() => {
-    if (!zoomFirst) onZoomShelf(null);
-  }, [zoomFirst, onZoomShelf]);
+    if (!zoomFirst && zoom && zoom !== 'bookcase') onZoom(null);
+  }, [zoomFirst, zoom, onZoom]);
 
-  // Zoom the whole scene so the chosen shelf's books fill the screen.
+  /** What a zoom target covers, in px of the unzoomed frame. */
+  const zoomBox = useCallback(
+    (target: ZoomTarget | null): Box | null => {
+      const frame = frameRef.current;
+      if (!frame || !target) return null;
+      const fw = frame.offsetWidth;
+      const fh = frame.offsetHeight;
+      if (target === 'bookcase') {
+        const b = plate.bookcase;
+        return { x0: (fw * b.left) / 100, x1: (fw * (b.left + b.width)) / 100, y0: (fh * b.top) / 100, y1: (fh * (b.top + b.height)) / 100, fill: 0.88 };
+      }
+      const geometry = plate.shelves.find((shelf) => shelf.id === target);
+      if (!geometry) return null;
+      const row = sceneRef.current?.querySelector<HTMLElement>(`[data-shelf-row="${geometry.id}"]`);
+      const x0 = (fw * geometry.left) / 100 + (row?.offsetLeft ?? 0);
+      return {
+        x0,
+        x1: x0 + (row?.offsetWidth ?? (fw * (geometry.right - geometry.left)) / 100),
+        y0: (fh * (geometry.baseline - geometry.height - 1)) / 100,
+        y1: (fh * (geometry.labelY + 1.5)) / 100,
+        fill: 0.62,
+      };
+    },
+    [plate],
+  );
+
+  // Zoom the whole scene so the chosen shelf (or the whole bookcase) fills the screen.
   const zoomedRef = useRef(false);
   useEffect(() => {
     const scene = sceneRef.current;
     const frame = frameRef.current;
     if (!scene || !frame) return;
     const duration = reducedMotion ? 0 : 0.8;
-    const geometry = plate.shelves.find((shelf) => shelf.id === zoomShelf);
-    if (!geometry) {
+    const box = zoomBox(zoom);
+    // On a plate already framed tight on the bookcase there's nothing closer to go to.
+    if (box && zoom === 'bookcase' && zoomScale(box) <= 1.05) {
+      onZoom(null);
+      return;
+    }
+    if (!box) {
       // Only zoom back out if we zoomed in; otherwise this would fight the intro's push-in.
       if (zoomedRef.current) gsap.to(scene, { x: 0, y: 0, scale: 1, duration, ease: 'power3.inOut' });
       zoomedRef.current = false;
       return;
     }
     zoomedRef.current = true;
-    const row = scene.querySelector<HTMLElement>(`[data-shelf-row="${geometry.id}"]`);
     const fw = frame.offsetWidth;
     const fh = frame.offsetHeight;
-    const x0 = (fw * geometry.left) / 100 + (row?.offsetLeft ?? 0);
-    const x1 = x0 + (row?.offsetWidth ?? (fw * (geometry.right - geometry.left)) / 100);
-    const y0 = (fh * (geometry.baseline - geometry.height - 1)) / 100;
-    const y1 = (fh * (geometry.labelY + 1.5)) / 100;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const scale = Math.min(Math.max(Math.min((vw * 0.92) / (x1 - x0), (vh * 0.62) / (y1 - y0)), 1), 2.6);
-    // Center the shelf, but never pull the plate's edge into view.
+    const scale = zoomScale(box);
+    // Center the target, but never pull the plate's edge into view.
     const frameLeft = (vw - fw) / 2;
     const frameTop = (vh - fh) / 2;
     const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
     gsap.to(scene, {
-      x: clamp(vw / 2 - frameLeft - scale * ((x0 + x1) / 2), vw - frameLeft - fw * scale, -frameLeft),
-      y: clamp(vh / 2 - frameTop - scale * ((y0 + y1) / 2), vh - frameTop - fh * scale, -frameTop),
+      x: clamp(vw / 2 - frameLeft - scale * ((box.x0 + box.x1) / 2), vw - frameLeft - fw * scale, -frameLeft),
+      y: clamp(vh / 2 - frameTop - scale * ((box.y0 + box.y1) / 2), vh - frameTop - fh * scale, -frameTop),
       scale,
       duration,
       ease: 'power3.inOut',
     });
-  }, [zoomShelf, plate, reducedMotion]);
+  }, [zoom, zoomBox, reducedMotion, onZoom]);
 
   useEffect(() => {
-    if (!zoomShelf || hiddenId) return;
+    if (!zoom || hiddenId) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onZoomShelf(null);
+      if (event.key === 'Escape') onZoom(null);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [zoomShelf, hiddenId, onZoomShelf]);
+  }, [zoom, hiddenId, onZoom]);
 
   const activate = useCallback(
     (book: Book) => {
       setTip(null);
-      if (zoomFirst && zoomShelf !== book.shelf) onZoomShelf(book.shelf);
+      if (zoomFirst && zoom !== book.shelf) onZoom(book.shelf);
       else onOpen(book.id);
     },
-    [zoomFirst, zoomShelf, onZoomShelf, onOpen],
+    [zoomFirst, zoom, onZoom, onOpen, setTip],
   );
 
-  const hover = useCallback((book: Book | null, element?: HTMLElement) => {
-    const spine = element?.querySelector('.lib-spine')?.getBoundingClientRect();
-    setTip(book && spine ? { book, x: spine.left + spine.width / 2, y: spine.top } : null);
-  }, []);
+  const draftNote = useCallback((book: Book) => (isDraft(book) ? ' · draft' : ''), [isDraft]);
+
+  const hover = useCallback(
+    (book: Book | null, element?: HTMLElement) => {
+      const spine = element?.querySelector('.lib-spine')?.getBoundingClientRect();
+      setTip(
+        book && spine
+          ? { title: book.title, meta: (book.dates || 'Undated') + draftNote(book), x: spine.left + spine.width / 2, y: spine.top }
+          : null,
+      );
+    },
+    [draftNote, setTip],
+  );
+
+  const hotspotTip = useCallback((title: string, meta: string, rect: DOMRect | null) => {
+    setTip(rect ? { title, meta, x: rect.left + rect.width / 2, y: rect.top } : null);
+  }, [setTip]);
 
   const imageStyle = plate.image && {
     left: `${plate.image.left}%`,
@@ -268,7 +338,15 @@ export function Stage({
         ref={frameRef}
         style={{ width: `max(100vw, ${plate.aspect * 100}dvh)`, height: `max(${100 / plate.aspect}vw, 100dvh)` }}
       >
-        <div className="lib-scene" ref={sceneRef} style={{ perspectiveOrigin: `50% ${plate.eyeY}%`, background: plate.backdrop }}>
+        <div
+          className="lib-scene"
+          ref={sceneRef}
+          style={{
+            perspective: `${plate.perspective}cqh`,
+            perspectiveOrigin: `${plate.eyeX}% ${plate.eyeY}%`,
+            background: plate.backdrop,
+          }}
+        >
           <img className={plateClass} style={imageStyle} src={plate.src} alt="" draggable={false} />
           {plate.shelves.map((geometry) => (
             <Shelf
@@ -281,10 +359,60 @@ export function Stage({
               hiddenId={hiddenId}
               onActivate={activate}
               onHover={hover}
-              onShelfClick={zoomFirst && zoomShelf !== geometry.id ? () => onZoomShelf(geometry.id) : undefined}
+              onShelfClick={
+                zoomFirst
+                  ? zoom !== geometry.id
+                    ? () => onZoom(geometry.id)
+                    : undefined
+                  : zoom !== 'bookcase'
+                    ? () => onZoom('bookcase') // desktop: clicking a shelf (not a book) moves in close
+                    : undefined
+              }
             />
           ))}
           <img className="lib-light" style={{ ...imageStyle, clipPath: plate.lightClip }} src={plate.src} alt="" draggable={false} />
+          {plate.occluders?.map((points, i) => (
+            <img
+              key={i}
+              className={plateClass}
+              style={{ ...imageStyle, clipPath: toClipPath(points) }}
+              src={plate.src}
+              alt=""
+              draggable={false}
+            />
+          ))}
+          {plate.lookUp && (
+            <img
+              className="lib-lookup"
+              style={inFrame(plate, plate.lookUp.rect)}
+              data-shown={dialogueOpen}
+              src={plate.lookUp.src}
+              alt=""
+              draggable={false}
+            />
+          )}
+          {/* Zhi first, then the book in their hands, so the book wins where the two overlap. */}
+          {!portrait && plate.hotspots?.host && (
+            <PhotoHotspot
+              points={plate.hotspots.host}
+              label={`${FIRST_NAME}: say hello`}
+              title={FIRST_NAME}
+              meta="Say hello"
+              onActivate={onGreet}
+              onTip={hotspotTip}
+            />
+          )}
+          {!portrait && reading && plate.hotspots?.reading && (
+            <PhotoHotspot
+              points={plate.hotspots.reading}
+              label={`Currently reading: ${reading.title}`}
+              title={reading.title}
+              meta={`Currently reading${draftNote(reading)}`}
+              originId={reading.id}
+              onActivate={() => onOpen(reading.id)}
+              onTip={hotspotTip}
+            />
+          )}
           {playClip && (
             <video ref={videoRef} className={plateClass} style={imageStyle} src={plate.intro} muted playsInline preload="auto" aria-hidden="true" />
           )}
@@ -296,19 +424,18 @@ export function Stage({
 
       {tip && !hiddenId && (
         <div className="lib-tip" style={{ left: tip.x, top: tip.y }} aria-hidden="true">
-          <div className="lib-tip__title">{tip.book.title}</div>
-          <div className="lib-tip__meta">
-            {tip.book.dates || 'Undated'}
-            {isDraft(tip.book) && ' · draft'}
-          </div>
+          <div className="lib-tip__title">{tip.title}</div>
+          <div className="lib-tip__meta">{tip.meta}</div>
         </div>
       )}
 
-      {zoomShelf && (
-        <button type="button" className="lib-unzoom" onClick={() => onZoomShelf(null)}>
-          ← All shelves
+      {zoom && !dialogueOpen && (
+        <button type="button" className="lib-unzoom" onClick={() => onZoom(null)}>
+          {zoom === 'bookcase' ? '← Back to the room' : '← All shelves'}
         </button>
       )}
+
+      {introDone && !dialogueOpen && !zoom && (portrait || !plate.hotspots?.host) && <HelloButton onClick={onGreet} />}
 
       {/* The intro above handles its clicks. */}
       {playClip && (
@@ -320,14 +447,78 @@ export function Stage({
   );
 }
 
-/** ?debug: outlines the shelf geometry from scene.ts so it can be matched to a new plate. */
+const toPoints = (points: Polygon) => points.map(([x, y]) => `${x},${y}`).join(' ');
+const toClipPath = (points: Polygon) => `polygon(${points.map(([x, y]) => `${x}% ${y}%`).join(', ')})`;
+
+/** Places a rect given in % of the image in the frame (they differ on phones). */
+function inFrame(plate: Plate, r: Rect) {
+  const i = plate.image ?? { left: 0, top: 0, width: 100, height: 100 };
+  return {
+    left: `${i.left + (r.left * i.width) / 100}%`,
+    top: `${i.top + (r.top * i.height) / 100}%`,
+    width: `${(r.width * i.width) / 100}%`,
+    height: `${(r.height * i.height) / 100}%`,
+  };
+}
+
+interface PhotoHotspotProps {
+  points: Polygon;
+  /** For screen readers. */
+  label: string;
+  title: string;
+  meta: string;
+  /** Marks where an opened book starts its flight (see BookSpread). */
+  originId?: string;
+  onActivate: () => void;
+  onTip: (title: string, meta: string, rect: DOMRect | null) => void;
+}
+
+/** A shape on the photo that works as a button: a brass outline and a tooltip on hover or focus. */
+function PhotoHotspot({ points, label, title, meta, originId, onActivate, onTip }: PhotoHotspotProps) {
+  const outlineRef = useRef<SVGPolygonElement>(null);
+  const show = () => onTip(title, meta, outlineRef.current?.getBoundingClientRect() ?? null);
+  const hide = () => onTip(title, meta, null);
+  return (
+    <>
+      <button
+        type="button"
+        className="lib-hotspot"
+        style={{ clipPath: toClipPath(points) }}
+        aria-label={label}
+        onClick={() => {
+          hide();
+          onActivate();
+        }}
+        onPointerEnter={(event) => {
+          if (event.pointerType !== 'touch') show();
+        }}
+        onPointerLeave={hide}
+        onFocus={(event) => {
+          if (event.currentTarget.matches(':focus-visible')) show();
+        }}
+        onBlur={hide}
+      />
+      <svg className="lib-hotspot-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <polygon ref={outlineRef} points={toPoints(points)} data-book-origin={originId} />
+      </svg>
+    </>
+  );
+}
+
+/** ?debug: outlines the geometry from scene.ts so it can be matched to a new plate. */
 function DebugOverlay({ plate }: { plate: Plate }) {
   // Line captions sit just right of the bookcase so a cropped frame doesn't hide them.
   const captionLeft = { left: `calc(${Math.max(...plate.shelves.map((g) => g.right))}% + 8px)` };
+  const b = plate.bookcase;
   return (
     <div className="lib-debug" aria-hidden="true">
       <div className="lib-debug__line" style={{ top: `${plate.eyeY}%` }}>
-        <span style={captionLeft}>eyeY {plate.eyeY}</span>
+        <span style={captionLeft}>
+          eye {plate.eyeX}, {plate.eyeY}
+        </span>
+      </div>
+      <div className="lib-debug__shelf lib-debug__box" style={{ left: `${b.left}%`, top: `${b.top}%`, width: `${b.width}%`, height: `${b.height}%` }}>
+        <span>bookcase</span>
       </div>
       {plate.shelves.map((g) => (
         <div key={g.id}>
@@ -344,6 +535,15 @@ function DebugOverlay({ plate }: { plate: Plate }) {
           </div>
         </div>
       ))}
+      <svg className="lib-debug__shapes" viewBox="0 0 100 100" preserveAspectRatio="none">
+        {plate.hotspots?.host && <polygon points={toPoints(plate.hotspots.host)} />}
+        {plate.hotspots?.reading && <polygon points={toPoints(plate.hotspots.reading)} />}
+        {/* These are in % of the image, which is the frame only when the photo isn't fitted. */}
+        {!plate.image && plate.occluders?.map((points, i) => <polygon key={i} points={toPoints(points)} />)}
+        {!plate.image && plate.lookUp && (
+          <rect x={plate.lookUp.rect.left} y={plate.lookUp.rect.top} width={plate.lookUp.rect.width} height={plate.lookUp.rect.height} />
+        )}
+      </svg>
     </div>
   );
 }

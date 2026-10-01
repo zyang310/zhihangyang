@@ -1,11 +1,13 @@
 // Types and helpers for the bookshelf. The content itself lives in books.ts.
 
-export type ShelfId = 'life' | 'experience' | 'projects';
+/** 'reading' isn't on the bookcase: it's the book in Zhi's hands in the armchair. */
+export type ShelfId = 'life' | 'experience' | 'projects' | 'reading';
 
 export const SHELVES: { id: ShelfId; label: string }[] = [
   { id: 'life', label: 'Life Story' },
   { id: 'experience', label: 'Experience' },
   { id: 'projects', label: 'Projects' },
+  { id: 'reading', label: 'Currently Reading' },
 ];
 
 export function shelfLabel(id: ShelfId): string {
@@ -58,6 +60,11 @@ export const PROMPTS = {
     'What stack did you use?',
     'What was the hardest decision or bug?',
     'What was the result? Add a link and a screenshot.',
+  ],
+  reading: [
+    'Title and author (put the author in facts).',
+    'Why did you pick it up?',
+    'One idea that has stuck with you so far.',
   ],
 };
 

@@ -206,4 +206,16 @@ This was a significant milestone for me as it allowed me to apply my knowledge i
     body: ``,
     prompts: PROMPTS.project,
   },
+
+  // ─── Currently Reading: the book in Zhi's hands in the armchair ─────────
+  {
+    id: 'reading-now',
+    shelf: 'reading',
+    title: 'Untitled', // TODO(zhi): the book you're reading now
+    dates: '', // TODO(zhi): e.g. "Since September 2026"
+    // Matches the plain oxblood cover in the photo, so any title fits.
+    binding: { texture: 'cloth', color: '#5b1a1c', height: 0.9 },
+    body: ``,
+    prompts: PROMPTS.reading,
+  },
 ];

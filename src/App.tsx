@@ -7,6 +7,8 @@ import { Stage } from './components/library/Stage';
 import { BookSpread } from './components/library/BookSpread';
 import { Nameplate } from './components/library/Nameplate';
 import { CardCatalog } from './components/library/CardCatalog';
+import { HostDialogue } from './components/library/HostDialogue';
+import { GREETING, type Choice } from './data/host';
 
 // Unfinished books show in development, or anywhere with ?drafts.
 const showDrafts = import.meta.env.DEV || hasQueryFlag('drafts');
@@ -36,6 +38,42 @@ function App() {
     }
   }, [displayedId, catalogOpen]);
 
+  // Zhi's dialogue: which part of the conversation is showing, and whether it should take focus
+  // (yes when the visitor clicked Zhi, no when Zhi greets on their own).
+  const [dialogue, setDialogue] = useState<{ node: string; takeFocus: boolean } | null>(null);
+  const greet = useCallback(() => setDialogue({ node: GREETING, takeFocus: true }), []);
+  const closeDialogue = useCallback(() => setDialogue(null), []);
+  const { introDone, greetOnArrival, markGreeted, open, setZoom, byId } = library;
+
+  // Each new visitor gets a greeting once, a moment after the books settle.
+  useEffect(() => {
+    if (!introDone || !greetOnArrival) return;
+    const timer = window.setTimeout(() => {
+      markGreeted();
+      setDialogue((current) => current ?? { node: GREETING, takeFocus: false });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [introDone, greetOnArrival, markGreeted]);
+
+  // A book or the catalog takes over the screen, so Zhi stops talking.
+  useEffect(() => {
+    if (displayedId || catalogOpen) setDialogue(null);
+  }, [displayedId, catalogOpen]);
+
+  const choose = useCallback(
+    (choice: Choice) => {
+      if ('next' in choice) {
+        setDialogue({ node: choice.next, takeFocus: true });
+        return;
+      }
+      setDialogue(null);
+      if ('open' in choice) open(choice.open);
+      else if ('browse' in choice) setZoom('bookcase');
+    },
+    [open, setZoom],
+  );
+  const canOpen = useCallback((id: string) => byId.has(id), [byId]);
+
   const closeCatalog = useCallback(() => {
     setCatalogOpen(false);
     requestAnimationFrame(() => catalogButtonRef.current?.focus({ preventScroll: true }));
@@ -52,12 +90,25 @@ function App() {
           introDone={library.introDone}
           onIntroDone={library.finishIntro}
           onOpen={library.open}
-          zoomShelf={library.zoomShelf}
-          onZoomShelf={library.setZoomShelf}
+          zoom={library.zoom}
+          onZoom={setZoom}
+          onGreet={greet}
+          dialogueOpen={dialogue !== null}
           reducedMotion={reducedMotion}
           debug={debug}
         />
         <Nameplate ref={catalogButtonRef} onOpenCatalog={() => setCatalogOpen(true)} />
+        {dialogue && (
+          <HostDialogue
+            key={dialogue.node}
+            node={dialogue.node}
+            takeFocus={dialogue.takeFocus}
+            reducedMotion={reducedMotion}
+            canOpen={canOpen}
+            onChoose={choose}
+            onClose={closeDialogue}
+          />
+        )}
       </div>
       <BookSpread
         book={library.openBook}

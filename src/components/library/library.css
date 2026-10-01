@@ -39,10 +39,10 @@
   container-type: size;
 }
 
+/* perspective and perspective-origin come from the plate (scene.ts). */
 .lib-scene {
   position: absolute;
   inset: 0;
-  perspective: 170cqh;
   transform-origin: 0 0;
 }
 
@@ -62,6 +62,20 @@
 .lib-plate--fitted {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 7%, #000 86%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0, #000 7%, #000 86%, transparent 100%);
+}
+
+/* Zhi looking up: crossfades in over the photo while they talk. */
+.lib-lookup {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 450ms ease;
+}
+
+.lib-lookup[data-shown='true'] {
+  opacity: 1;
 }
 
 /* A blurred copy of the plate, clipped to the bookcase, lights the books with the room's own light. */
@@ -581,6 +595,233 @@
   color: #ffb3dc;
 }
 
+.lib-debug__box {
+  outline-color: rgba(140, 255, 170, 0.9);
+  background: none;
+}
+
+.lib-debug__box > span {
+  color: #a8ffbf;
+}
+
+.lib-debug__shapes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lib-debug__shapes > * {
+  fill: rgba(255, 120, 220, 0.12);
+  stroke: rgba(255, 120, 220, 0.95);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ─── Click targets on the photo (Zhi, and the book in their hands) ───── */
+
+/* Covers the frame; clip-path trims both the look and the clickable area to the traced shape. */
+.lib-hotspot {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lib-hotspot-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  filter: drop-shadow(0 0 0.5cqh rgba(241, 215, 154, 0.85));
+}
+
+.lib-hotspot-outline polygon {
+  fill: rgba(241, 223, 174, 0.07);
+  stroke: #f1d79a;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.lib-hotspot:hover + .lib-hotspot-outline,
+.lib-hotspot:focus-visible + .lib-hotspot-outline {
+  opacity: 1;
+}
+
+/* ─── Zhi's dialogue ──────────────────────────────────────────────────── */
+
+.host {
+  position: fixed;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 26;
+  translate: -50% 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: min(760px, calc(100vw - 24px));
+  padding: 16px 44px 16px 16px;
+  color: #f3ead6;
+  background: rgba(18, 12, 8, 0.93);
+  border: 1px solid rgba(227, 197, 130, 0.45);
+  border-radius: 6px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-serif);
+  cursor: pointer;
+  animation: host-in 280ms ease-out;
+}
+
+@keyframes host-in {
+  from {
+    opacity: 0;
+    translate: -50% 14px;
+  }
+}
+
+.host__face {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(227, 197, 130, 0.55);
+  border-radius: 50%;
+  background: #2a1c12 center / cover no-repeat;
+}
+
+.host__body {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.host__name {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #e3c582;
+}
+
+.host__line {
+  margin: 0;
+  font-size: clamp(16px, 1.55vw, 19px);
+  line-height: 1.45;
+}
+
+/* The untyped rest of the line holds its space, so the box doesn't grow as the text types out. */
+.host__rest {
+  visibility: hidden;
+}
+
+.host__next {
+  position: absolute;
+  right: -30px;
+  bottom: -4px;
+  padding: 2px 6px;
+  border: 0;
+  background: none;
+  color: #e3c582;
+  font-size: 16px;
+  cursor: pointer;
+  animation: host-nudge 1.2s ease-in-out infinite;
+}
+
+@keyframes host-nudge {
+  50% {
+    translate: 3px 0;
+  }
+}
+
+.host__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.host__choice {
+  padding: 8px 14px;
+  border: 1px solid rgba(227, 197, 130, 0.5);
+  border-radius: 999px;
+  background: rgba(227, 197, 130, 0.08);
+  color: #f1dfae;
+  font: 600 14px / 1 var(--font-serif);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.host__choice:hover,
+.host__choice:focus-visible {
+  outline: none;
+  border-color: rgba(241, 215, 154, 0.9);
+  background: rgba(227, 197, 130, 0.2);
+}
+
+.host__close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: rgba(243, 234, 214, 0.7);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.host__close:hover,
+.host__close:focus-visible {
+  outline: none;
+  color: #f3ead6;
+  background: rgba(227, 197, 130, 0.15);
+}
+
+.host-hello {
+  position: fixed;
+  left: max(14px, env(safe-area-inset-left));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 24;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 16px 5px 5px;
+  font: 600 13px / 1 var(--font-serif);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f3e6c4;
+  background: rgba(20, 13, 8, 0.82);
+  border: 1px solid rgba(227, 197, 130, 0.5);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.host-hello__face {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3a2618 center / cover no-repeat;
+  color: #e3c582;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
 /* ─── The open book ───────────────────────────────────────────────────── */
 
 .spread {
@@ -1011,8 +1252,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   .lib-book,
-  .catalog-card {
+  .catalog-card,
+  .lib-hotspot-outline {
     transition: none;
+  }
+
+  .host,
+  .host__next {
+    animation: none;
   }
 
   .catalog-panel,
