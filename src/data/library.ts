@@ -38,6 +38,8 @@ export interface Book {
   links?: { label: string; href: string }[];
   /** A picture for the left page; for the book Zhi is reading, its cover. */
   image?: { src: string; alt: string };
+  /** Photos shown in a grid on the left page. */
+  gallery?: { src: string; alt: string }[];
   /** Writing prompts shown on unfinished books in development. */
   prompts?: string[];
 }

@@ -359,6 +359,17 @@ export function Stage({
               hiddenId={hiddenId}
               onActivate={activate}
               onHover={hover}
+              front={
+                geometry.front && (
+                  <img
+                    className={plateClass}
+                    style={{ ...imageStyle, clipPath: toClipPath(geometry.front) }}
+                    src={plate.src}
+                    alt=""
+                    draggable={false}
+                  />
+                )
+              }
               onShelfClick={
                 zoomFirst
                   ? zoom !== geometry.id

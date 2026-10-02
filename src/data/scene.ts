@@ -23,6 +23,8 @@ export interface ShelfGeometry {
   right: number;
   /** Vertical center of the board's front edge, where the label plate goes, % of frame height. */
   labelY: number;
+  /** The board's front face, redrawn over the books but under the label, % of the image. */
+  front?: Polygon;
 }
 
 /** A rectangle in % of the frame (or of the image, where noted). */
@@ -67,7 +69,16 @@ export interface Plate {
 }
 
 const landscapeShelves: ShelfGeometry[] = [
-  { id: 'life', baseline: 37, height: 14.2, left: 37.4, right: 62.8, labelY: 37.7 },
+  {
+    id: 'life',
+    baseline: 37,
+    height: 14.2,
+    left: 37.4,
+    right: 62.8,
+    labelY: 37.7,
+    // Above eye level, the books' covers recede downward past the board's front edge; it hides them.
+    front: [[37.4, 37], [62.8, 37], [62.8, 38.4], [37.4, 38.4]],
+  },
   { id: 'experience', baseline: 54.9, height: 14.8, left: 37.4, right: 62.8, labelY: 55.6 },
   { id: 'projects', baseline: 73.9, height: 14.8, left: 37.4, right: 62.8, labelY: 74.6 },
 ];

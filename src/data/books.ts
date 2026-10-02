@@ -1,5 +1,9 @@
 import { PROMPTS, type Book } from './library';
 import threeBodyCover from '../assets/media/cover-three-body.webp';
+import cphCityHall from '../assets/media/copenhagen-city-hall.webp';
+import cphHarbor from '../assets/media/copenhagen-harbor.webp';
+import cphRosenborg from '../assets/media/copenhagen-rosenborg.webp';
+import cphSunset from '../assets/media/copenhagen-sunset.webp';
 
 // Every item on the site is a book. Order here is order on the shelf.
 //
@@ -10,105 +14,76 @@ import threeBodyCover from '../assets/media/cover-three-body.webp';
 //
 // Body text: separate paragraphs with a blank line. [[book-id|text]] links to another book.
 
+const copenhagenPhotos = [
+  { src: cphRosenborg, alt: "Rosenborg Castle framed by linden leaves in the King's Garden, Copenhagen" },
+  { src: cphHarbor, alt: 'An old brick warehouse with a red tile roof on the Copenhagen harbor, bicycles in the foreground' },
+  { src: cphSunset, alt: 'Sunset down a tree-lined Copenhagen street, bicycles parked along the sidewalk' },
+  { src: cphCityHall, alt: 'Copenhagen City Hall and its clock tower under an overcast evening sky' },
+];
+
 const lifeBinding = { texture: 'cloth', color: '#5b1a1c', height: 0.93 } as const;
 
 export const BOOKS: Book[] = [
   // ─── Life Story ──────────────────────────────────────────────────────────
   {
-    id: 'beginning',
+    id: 'before-college',
     shelf: 'life',
-    title: 'The Beginning',
-    dates: '2004',
+    title: 'Before College',
+    dates: '2004–2023',
     binding: lifeBinding,
-    body: `Hello world! This is Zhi and I was born in 2004, the Year of the Wood Monkey. My parents are from the countryside of China, in a village outside of Fuzhou, Fujian Province. But I was born in a hospital in Brooklyn, New York.`,
-  },
-  {
-    id: 'chinese-years',
-    shelf: 'life',
-    title: 'The Chinese Years',
-    dates: '2008',
-    binding: lifeBinding,
-    body: `My parents sent me to China to live with my grandparents in the countryside. I learned to speak Mandarin and experienced Chinese culture firsthand, even attending pre-school in China. I came back to the US in 2010-2011 and started first grade.`,
-  },
-  {
-    id: 'new-bern',
-    shelf: 'life',
-    title: 'Growing Up in New Bern',
-    dates: '2012',
-    binding: lifeBinding,
-    body: `Our family moved to New Bern, North Carolina, to open a [[restaurant|Chinese restaurant]], which I helped out at after school. I started second grade at a local elementary school and made new friends. I also started learning to play the piano and developed a passion for music.`,
-  },
-  {
-    id: 'battle-of-the-books',
-    shelf: 'life',
-    title: 'Battle of the Books', // TODO(zhi): draft retitle; was "Another Monkey Year"
-    dates: '2016',
-    binding: lifeBinding,
-    body: `2016 was another Monkey year, which means I turned 12 years old. This was also the year I graduated from elementary school and started middle school.
+    body: `Hello world! This is Zhi and I was born in 2004. My parents are from the countryside of China, in a village outside of Fuzhou, Fujian Province. But I was born in a hospital in Brooklyn, New York.
 
-One of the highlights of this year was competing in my district's Battle of the Books competition, where we took 4th place out of 26 teams. Battle of the Books is also where I developed a love for reading!`,
-  },
-  {
-    id: 'pandemic',
-    shelf: 'life',
-    title: 'Living in the Pandemic',
-    dates: '2020',
-    binding: lifeBinding,
-    body: `2019-2020 was the start of my high school years. I went to Craven Early College, which allows its students to take college courses while in high school. 2020 was a challenging year due to the global pandemic. Despite the difficulties, I continued to pursue my interests and hobbies, such as music and reading.
+When I was young, my parents sent me to [[travel|China to live with my grandparents]] in the countryside, where I learned to speak Mandarin and even attended pre-school. I came back to the US in 2010-2011 and started first grade.
 
-I also got my first computer through savings from [[restaurant|working at my parent's restaurant]] and started learning about computer programming, developing a passion for technology.`,
-  },
-  {
-    id: 'senior-year',
-    shelf: 'life',
-    title: 'Senior Year', // TODO(zhi): draft retitle; was "Year of the Tiger"
-    dates: '2022',
-    binding: lifeBinding,
-    body: `2022 marked the end of my junior year and the start of my senior year. This was when I started applying to colleges and planning for my future. I continued to work part-time at my parent's restaurant and focused on my classes and extracurricular activities, such as my school's Junior Honor Society, Junior Civitan, and Science Olympiad.`,
-  },
-  {
-    id: 'chapel-hill',
-    shelf: 'life',
-    title: 'Chapel Hill', // TODO(zhi): draft retitle; was "Year of the Rabbit"
-    dates: '2023',
-    binding: lifeBinding,
-    body: `2023 was a major year in my life: I got accepted into the University of North Carolina at Chapel Hill, graduated high school, and started my college journey. I continued to work part-time at my parent's restaurant. At UNC, I started learning more about computer science. My first semester only consisted of COMP 110, the introductory class at UNC, but I was excited to absorb all the knowledge it had to offer!
+Our family then moved to New Bern, North Carolina, to open a [[restaurant|Chinese restaurant]], which I helped out at after school. I started second grade at a local elementary school and made new friends. In 2016 I graduated from elementary school and started middle school.
 
-I also attended my first hackathon, [[hack110|Hack110]]. It was an incredible and quite humbling experience, having to piece together a project from scratch in a limited amount of time. At UNC, I also chose to minor in Chinese, wanting to bridge the gap between my two backgrounds.`,
+In 2019 I started high school at Craven Early College, which allows its students to take college courses while in high school. 2020 was a challenging year due to the global pandemic, but it's also when I got my first computer through savings from [[restaurant|working at my parent's restaurant]] and started learning about computer programming, developing a passion for technology.
+
+My senior year was when I started applying to colleges and planning for my future. I continued to work part-time at the restaurant and focused on my classes and extracurricular activities, such as my school's Junior Honor Society, Junior Civitan, and Science Olympiad.`,
   },
   {
-    id: 'back-to-china',
+    id: 'college',
     shelf: 'life',
-    title: 'Back to China', // TODO(zhi): draft retitle; was "Year of the Dragon"
-    dates: '2024',
-    binding: lifeBinding,
-    body: `Each year brings new challenges and experiences, and 2024 was no exception. I took classes in discrete structures and data structures and algorithms. I also took the opportunity to volunteer for [[pearl-hack|Pearl Hack]]!
-
-The summer after my freshman year, I had the opportunity to travel to China for the first time in over 10 years. I visited my hometown, Fuzhou, and explored other cities like Shanghai and Beijing. This trip was a significant milestone in my life, as it allowed me to reconnect with my cultural roots and gain a deeper understanding of my heritage. It was an incredibly enriching experience that broadened my perspectives and deepened my appreciation for both my Chinese and American identities.
-
-During the start of my sophomore year, I took classes in OOP and Computer Systems.`,
-  },
-  {
-    id: 'present',
-    shelf: 'life',
-    title: 'The Present', // TODO(zhi): no longer the present once the 2026 volume is written
-    dates: '2025',
+    title: 'College',
+    dates: '2023–Present',
     binding: lifeBinding,
     // TODO(zhi): Project Hub and Copenhagen now have their own books; trim the overlap here if you like
-    body: `2025 is when I'm learning more about the various areas of computer science and applying my knowledge in personal and class projects. Some of the classes I took in my spring semester of sophomore year were COMP 550, which helped me understand how to design algorithms, and COMP 423, a software engineering class where I learned a lot about how software engineering works in industry. My team developed [[project-hub|Project Hub]], a feature for CSX, a platform for UNC students to manage their projects and collaborate with each other. This was a significant milestone for me as it allowed me to apply my knowledge in a real-world setting and gain valuable experience in software engineering.
+    body: `2023 was a major year in my life: I got accepted into the University of North Carolina at Chapel Hill, graduated high school, and started my college journey. My first semester only consisted of COMP 110, the introductory class at UNC, but I was excited to absorb all the knowledge it had to offer! I also attended my first hackathon, [[hack110|Hack110]]. It was an incredible and quite humbling experience, having to piece together a project from scratch in a limited amount of time. At UNC, I also chose to minor in Chinese, wanting to bridge the gap between my two backgrounds.
 
-During the summer, I [[copenhagen|studied abroad in Copenhagen, Denmark]] for COMP 311, Computer Organization, which was an incredible experience. It opened my eyes to how different cultures approach technology as well as how interesting computer architecture is. It really made me explore the low-level aspects of computer systems. This experience also led to the opportunity to be a [[comp311-uta|UTA for this class]]. Over the summer, I also developed [[bittle|Bittle]], an app that streamlines the process of pairing mentors and mentees for clubs.
+In 2024 I took classes in discrete structures and data structures and algorithms, and volunteered for [[pearl-hack|Pearl Hack]]! During the start of my sophomore year, I took classes in OOP and Computer Systems.
+
+In the spring of 2025 I took COMP 550, which helped me understand how to design algorithms, and COMP 423, a software engineering class where I learned a lot about how software engineering works in industry. My team developed [[project-hub|Project Hub]], a feature for CSX, a platform for UNC students to manage their projects and collaborate with each other.
+
+That summer, I [[copenhagen|studied abroad in Copenhagen]] for COMP 311, Computer Organization, which made me explore the low-level aspects of computer systems and led to the opportunity to be a [[comp311-uta|UTA for this class]]. I also developed [[bittle|Bittle]], an app that streamlines the process of pairing mentors and mentees for clubs.
 
 During the fall semester of my junior year, I took classes in 2-D graphics, Web Development, and Computer Security.`,
   },
   {
-    id: 'year-2026',
+    id: 'hobbies',
     shelf: 'life',
-    title: 'To Be Written', // TODO(zhi): the timeline stops at fall 2025
-    dates: '2026',
+    title: 'Hobbies',
+    dates: 'Ongoing',
     binding: lifeBinding,
-    body: ``,
-    prompts: PROMPTS.life,
+    // TODO(zhi): expand: what you play and read now, and anything else you do for fun
+    body: `Music: I started learning to play the piano after our family moved to New Bern and developed a passion for music.
+
+Reading: in middle school, I competed in my district's Battle of the Books competition, where we took 4th place out of 26 teams. Battle of the Books is where I developed a love for reading! These days I'm reading [[reading-now|The Three-Body Problem]].
+
+Through the pandemic, music and reading were what I kept coming back to, along with a new hobby: programming, which started on the first computer I bought with my own savings.`,
+  },
+  {
+    id: 'travel',
+    shelf: 'life',
+    title: 'Travel',
+    dates: '2008–2025',
+    binding: lifeBinding,
+    // TODO(zhi): add more trips (and photos from China)
+    image: copenhagenPhotos[0],
+    body: `China, as a child: my parents sent me to live with my grandparents in the countryside outside Fuzhou. I learned to speak Mandarin and experienced Chinese culture firsthand, even attending pre-school in China, before coming back to the US in 2010-2011.
+
+China, 2024: the summer after my freshman year, I traveled to China for the first time in over 10 years. I visited my hometown, Fuzhou, and explored other cities like Shanghai and Beijing. The trip allowed me to reconnect with my cultural roots and gain a deeper understanding of my heritage, and deepened my appreciation for both my Chinese and American identities.
+
+Denmark, 2025: I spent the summer [[copenhagen|studying abroad in Copenhagen]], which opened my eyes to how different cultures approach technology.`,
   },
 
   // ─── Experience ──────────────────────────────────────────────────────────
@@ -140,6 +115,7 @@ I got my first computer through savings from working at the restaurant and start
     title: 'Study Abroad: Copenhagen',
     dates: 'Summer 2025',
     binding: { texture: 'cloth', color: '#22385a', height: 0.9 },
+    gallery: copenhagenPhotos,
     facts: [
       { label: 'Course', value: 'COMP 311 · Computer Organization' },
       { label: 'Where', value: 'Copenhagen, Denmark' },

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Book as BookData } from '../../data/library';
 import type { ShelfGeometry } from '../../data/scene';
 import { Book } from './Book';
@@ -13,6 +14,8 @@ interface ShelfProps {
   onHover: (book: BookData | null, element?: HTMLElement) => void;
   /** Phones: tapping the shelf (not a book) zooms to it. */
   onShelfClick?: () => void;
+  /** The board's front face, drawn over the books and under the label. */
+  front?: ReactNode;
 }
 
 /** Consecutive stacked books lie in one pile; standing books get a group each. */
@@ -26,7 +29,7 @@ function groupBooks(books: BookData[]): BookData[][] {
   return groups;
 }
 
-export function Shelf({ geometry: g, label, books, volumes, isDraft, hiddenId, onActivate, onHover, onShelfClick }: ShelfProps) {
+export function Shelf({ geometry: g, label, books, volumes, isDraft, hiddenId, onActivate, onHover, onShelfClick, front }: ShelfProps) {
   const renderBook = (book: BookData) => (
     <Book
       key={book.id}
@@ -67,6 +70,7 @@ export function Shelf({ geometry: g, label, books, volumes, isDraft, hiddenId, o
           <span className="lib-bookend lib-bookend--r" aria-hidden="true" />
         </div>
       </section>
+      {front}
       <div className="lib-label" style={{ left: `${(g.left + g.right) / 2}%`, top: `${g.labelY}%` }} aria-hidden="true">
         {label}
       </div>

@@ -928,6 +928,90 @@
   transform: rotateY(180deg);
 }
 
+.obook__leaf {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+
+.obook__leaf-front,
+.obook__leaf-back {
+  inset: 0;
+}
+
+.obook__leaf-back {
+  transform: rotateY(180deg);
+}
+
+/* Swipes turn pages; pinch-zoom still works. */
+.obook {
+  touch-action: pinch-zoom;
+}
+
+.spread:focus {
+  outline: none;
+}
+
+/* Lays out the flows, unseen, to count their pages (see BookSpread). */
+.spread__measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--W);
+  height: var(--H);
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.spread__measure > .page {
+  position: absolute;
+  inset: 0;
+}
+
+.spread__measure .page__flow {
+  overflow: hidden;
+}
+
+.spread__nav {
+  position: absolute;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  translate: -50% 0;
+  font: italic 14px / 1 var(--font-serif);
+  white-space: nowrap;
+  color: #f3e6c4;
+}
+
+.spread__turn {
+  width: 38px;
+  height: 38px;
+  font: 400 24px / 1 var(--font-serif);
+  color: #f3e6c4;
+  background: rgba(20, 13, 8, 0.6);
+  border: 1px solid rgba(227, 197, 130, 0.45);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.spread__turn:hover:not(:disabled),
+.spread__turn:focus-visible {
+  outline: none;
+  border-color: #e3c582;
+  background: rgba(60, 40, 20, 0.85);
+}
+
+.spread__turn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .cover {
   color: var(--foil-text);
   background-color: var(--c);
@@ -1200,25 +1284,65 @@
   box-shadow: inset 10px 0 18px -14px rgba(70, 45, 20, 0.45);
 }
 
-.page__scroll {
+/* A page is a window onto one column of its flow. The flow's columns are the window's width and
+   its gap is the page's side margins, so they sit one page width (--W) apart. */
+.page__clip {
   position: absolute;
-  inset: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: calc(var(--H) * 0.085) calc(var(--W) * 0.1) calc(var(--H) * 0.08) calc(var(--W) * 0.11);
-  font-size: clamp(14.5px, calc(var(--H) * 0.0255), 19px);
-  line-height: 1.55;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(80, 55, 30, 0.35) transparent;
+  top: calc(var(--H) * 0.085);
+  right: calc(var(--W) * 0.1);
+  bottom: calc(var(--H) * 0.08);
+  left: calc(var(--W) * 0.11);
+  overflow: hidden;
+  overflow: clip;
+  overflow-clip-margin: 10px; /* room for image shadows; the next column is far further away */
 }
 
-.page--left .page__scroll {
-  padding-left: calc(var(--W) * 0.1);
-  padding-right: calc(var(--W) * 0.11);
+.page--left .page__clip {
+  right: calc(var(--W) * 0.11);
+  left: calc(var(--W) * 0.1);
+}
+
+.page__flow {
+  height: 100%;
+  columns: 1;
+  column-gap: calc(var(--W) * 0.21);
+  column-fill: auto;
+  font-size: clamp(14.5px, calc(var(--H) * 0.0255), 19px);
+  line-height: 1.55;
+}
+
+.page[data-turn] {
+  cursor: pointer;
+}
+
+.page__folio {
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--H) * 0.028);
+  left: 0;
+  margin: 0;
+  font: italic clamp(11px, calc(var(--H) * 0.018), 14px) / 1 var(--font-serif);
+  text-align: center;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+/* The leaf being turned darkens as it lifts off the page and lightens as it lands. */
+.page__shade {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(40, 25, 10, 0.55), rgba(40, 25, 10, 0.12));
+}
+
+.page--left .page__shade {
+  background: linear-gradient(270deg, rgba(40, 25, 10, 0.55), rgba(40, 25, 10, 0.12));
 }
 
 .page__header {
   margin-bottom: 1.3em;
+  break-inside: avoid;
 }
 
 .page__kicker {
@@ -1314,12 +1438,33 @@
 
 .page__figure {
   margin: 0 0 1.2em;
+  break-inside: avoid;
+}
+
+.page__facts dl > div {
+  break-inside: avoid;
 }
 
 .page__figure img {
   width: 100%;
   border-radius: 2px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.page__gallery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5em;
+  margin: 0 0 1.2em;
+}
+
+.page__gallery img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .page__frontis {

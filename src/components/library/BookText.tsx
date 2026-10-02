@@ -27,7 +27,7 @@ export function BookStory({ book, byId }: { book: Book; byId: Map<string, Book> 
 
 /** Left page: facts, links, and image, or a frontispiece for books without them. */
 export function BookFacts({ book, volume, compact = false }: { book: Book; volume?: string; compact?: boolean }) {
-  const hasDetails = Boolean(book.facts?.length || book.links?.length || book.image);
+  const hasDetails = Boolean(book.facts?.length || book.links?.length || book.image || book.gallery?.length);
   const year = /\d{4}/.exec(book.dates)?.[0];
 
   if (!hasDetails) {
@@ -52,6 +52,15 @@ export function BookFacts({ book, volume, compact = false }: { book: Book; volum
           <img src={book.image.src} alt={book.image.alt} />
         </figure>
       )}
+      {book.gallery?.length ? (
+        <div className="page__gallery">
+          {book.gallery.map((photo) => (
+            <a key={photo.src} href={photo.src} target="_blank" rel="noreferrer">
+              <img src={photo.src} alt={photo.alt} />
+            </a>
+          ))}
+        </div>
+      ) : null}
       {book.facts?.length ? (
         <dl>
           {book.facts.map((fact) => (

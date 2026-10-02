@@ -33,7 +33,7 @@ export const DIALOGUE: Record<string, DialogueNode> = {
   start: {
     lines: ['Start with Volume I, top left. The story goes in order from there.'],
     choices: [
-      { label: 'Open Volume I', open: 'beginning' },
+      { label: 'Open Volume I', open: 'before-college' },
       { label: 'Back', next: 'greet' },
     ],
   },
